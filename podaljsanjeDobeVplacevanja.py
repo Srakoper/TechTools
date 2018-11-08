@@ -157,25 +157,30 @@ def generateOutput(data, y, m, sign_date):
 def main():
     path = getcwd().replace("\\", "\\\\") + "\\\\"
     while True:
+        filename_input = input("Ime .xlsx datoteke s tabelami o polici (X + ENTER za izhod): ")
+        if filename_input in ("x", "X"): quit()
         try:
-            wb = getWorkbook(input("Name of .xlsx file with policy data: "), path)
+            wb = getWorkbook(filename_input, path)
             break
-        except FileNotFoundError: print("File not found. Please try again.")
+        except FileNotFoundError: print("Datoteka ne obstaja. Poskusi znova.")
     while True:
+        extension_input = input("Doba podaljšanja v mesecih: ")
+        if extension_input in ("x", "X"): quit()
         try:
-            extension = int(input("Extension period in months: "))
+            extension = int(extension_input)
             break
-        except: print("Enter valid extension period.")
+        except: print("Vnesi veljavno dobo podaljšanja.")
     years = extension // 12
     months = extension % 12
     while True:
-        sign_date = input("Sign date in D.M.YYYY format: ")
+        sign_date = input("Datum podpisa v formatu D.M.YYYY: ")
+        if sign_date in ("x", "X"): quit()
         if verifyDate(sign_date): break
-        else: print("Enter date in valid D.M.YYYY format.")
+        else: print("Vnesi datum v veljavnem D.M.YYYY formatu.")
     fh = open("podaljsanje_dobe.txt", "w")
     fh.write(generateOutput(getData(wb), years, months, sign_date))
     fh.close()
-    print("Output data saved to file podaljsanje_dobe.txt.")
+    print("Ustvarjeni podatki shranjeni v datoteko podaljsanje_dobe.txt.")
 
 if __name__ == "__main__":
     main()
