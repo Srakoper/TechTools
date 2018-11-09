@@ -56,7 +56,7 @@ def getData(workbook):
     """
     sheet1 = workbook["Select policy"]
     sheet2 = workbook["Select pol_benf"]
-    policy_policy_no           = int (sheet1["C2"].value)
+    policy_policy_no           = int(sheet1["C2"].value)
     policy_pol_ref_no          = int(sheet1["D2"].value)
     policy_end_date            = sheet1["I2"].value
     policy_term                = int(sheet1["J2"].value)
@@ -152,7 +152,7 @@ def generateOutput(data, y, m, sign_date):
                 "sysdate",
                 "N",
                 "A")
-    return SQL_policy + "\n\n" + SQL_pol_benf  + "\n\n" + SQL_pol_benf_17 + "\n\n" + SQL_pol_endorsments + '\n\nPovzetek popravkov iz zgornjih SQL ukazov:\n\n' + description + "\n\nPriložen izvoz trenutnega stanja tabel za polico {}.".format(data["policy_policy_no"])
+    return SQL_policy + "\n\n" + SQL_pol_benf  + "\n\n" + SQL_pol_benf_17 + "\n\n" + SQL_pol_endorsments + "\n\nPovzetek popravkov iz zgornjih SQL ukazov:\n\n" + description + "\n\nPriložen izvoz trenutnega stanja tabel za polico {}.".format(data["policy_policy_no"])
 
 def main():
     path = getcwd().replace("\\", "\\\\") + "\\\\"
