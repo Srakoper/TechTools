@@ -8,7 +8,7 @@ def stringsColumn():
     fh.close()
     lines_no_quotes = list()
     for i in range(len(lines)):
-        if lines[i]:
+        if lines[i] != "\n":
             if i != len(lines) - 1:
                 if lines[i][-2:] != ",\n": lines_no_quotes.append(lines[i][:-1] + ",\n")
                 else: lines_no_quotes.append(lines[i])

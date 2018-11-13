@@ -8,7 +8,7 @@ def stringsColumn():
     fh.close()
     lines_quotes = list()
     for i in range(len(lines)):
-        if lines[i]:
+        if lines[i] != "\n":
             if i == len(lines) - 1:
                 if lines[i][-2] == ",": line_quotes = "'" + lines[i].strip()[:-1] + "'\n"
                 else: line_quotes = "'" + lines[i].strip() + "'"
