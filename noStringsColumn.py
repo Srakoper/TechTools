@@ -15,6 +15,7 @@ def stringsColumn():
             else:
                 if lines[i][-2:] == ",\n": lines_no_quotes.append(lines[i][:-2] + ",\n")
                 else: lines_no_quotes.append(lines[i])
+        if (i + 1) % 1000 == 0: lines_no_quotes.append("\n\n{} VNOSOV\n\n".format(i + 1))
     fh = open("noStringsColumn.txt", "w")
     for line in lines_no_quotes: fh.write(line)
     fh.close()
