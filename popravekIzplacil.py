@@ -29,6 +29,7 @@ def getData(workbook):
     sheet1 = workbook["Select policy"]
     sheet2 = workbook["Select claims_payment"]
     sheet3 = workbook["Select sa_postings"]
+    sheet4 = workbook["Select claim_dets"]
     policy_policy_no                    = int(sheet1["C2"].value)
     claims_payment_claims_payment_id_1  = int(sheet2["C2"].value)
     claims_payment_claims_payment_id_2  = int(sheet2["C3"].value)
@@ -39,10 +40,17 @@ def getData(workbook):
     sa_postings_personal_income_tax_ids = list()
     for i in range(len(sheet3["B"])):
         if sheet3["B"][i].value == "Maturity Claim Payment (To Client)" or sheet3["B"][i].value == "Surrender Claim Payment (To Client)":
-            if float(sheet3["Q"][i].value) == claims_payment_amount_2: sa_postings_maturity_claim_payment_id = int(sheet3["D"][i].value)
-            else: sa_postings_maturity_claim_payment_id = None
+            if float(sheet3["Q"][i].value) == claims_payment_amount_2:
+                sa_postings_maturity_claim_payment_id = int(sheet3["D"][i].value)
+                sa_postings_sa_transno = int(sheet3["E"][i].value)
+            else:
+                sa_postings_maturity_claim_payment_id = None
+                sa_postings_sa_transno = None
         if sheet3["B"][i].value == "Personal Income tax (Maturity)" or sheet3["B"][i].value == "Personal Income tax (Surrender)":
             if float(sheet3["P"][i].value) == claims_payment_amount_1 or float(sheet3["Q"][i].value) == claims_payment_amount_1: sa_postings_personal_income_tax_ids.append(sheet3["D"][i].value)
+    for i in range(1, len(sheet4["F"])):
+        if int(sheet4["G"][i].value) == 6 and "{:.2f}".format(sheet4["F"][i].value) != "{:.2f}".format(claims_payment_amount_1 + claims_payment_amount_2): claims_dets_claim_amt = True
+        else: claims_dets_claim_amt = False
     return {"policy_policy_no": policy_policy_no,
             "claims_payment_claims_payment_id_1": claims_payment_claims_payment_id_1,
             "claims_payment_claims_payment_id_2": claims_payment_claims_payment_id_2,
@@ -51,7 +59,9 @@ def getData(workbook):
             "claims_payment_curr_amount_1": claims_payment_curr_amount_1,
             "claims_payment_curr_amount_2": claims_payment_curr_amount_2,
             "sa_postings_maturity_claim_payment_id": sa_postings_maturity_claim_payment_id,
-            "sa_postings_personal_income_tax_ids": tuple(sa_postings_personal_income_tax_ids)}
+            "sa_postings_personal_income_tax_ids": tuple(sa_postings_personal_income_tax_ids),
+            "sa_postings_sa_transno": sa_postings_sa_transno,
+            "claims_dets_claim_amt": claims_dets_claim_amt}
 
 def generateOutput(data):
     """
@@ -84,7 +94,18 @@ def generateOutput(data):
                 data["sa_postings_maturity_claim_payment_id"])
     SQL_sa_posting_delete     = "DELETE\n  FROM sa_postings\n WHERE SA_POSTINGNO IN {};"\
         .format(data["sa_postings_personal_income_tax_ids"])
-    return SQL_claims_payment_update + "\n\n" + SQL_claims_payment_delete + "\n\n" + SQL_sa_posting_update + "\n\n" + SQL_sa_posting_delete + "\n\nPovzetek popravkov iz zgornjih SQL ukazov:\n\n" + description1 + "\n\n" + description2 + "\n\nPriložen izvoz trenutnega stanja tabel za polico {}.".format(data["policy_policy_no"])
+    if data["claims_dets_claim_amt"] and data["sa_postings_sa_transno"]:
+        description3          = "V tabeli claim_dets, kjer je SA_POSTINGNO = {}, je treba popraviti vrednost v stolpcu CLAIM_AMT:\n\nstara vrednost: {}\nnova vrednost: {}"\
+            .format(data["sa_postings_sa_transno"],
+                    "{:.2f}".format(data["claims_payment_amount_2"]).replace(".", ","),
+                    "{:.2f}".format(claims_payment_amount_new).replace(".", ","))
+        SQL_claim_dets_update = "UPDATE claim_dets\n   SET CLAIM_AMT = {}\n WHERE SA_POSTINGNO = {};"\
+            .format("{:.2f}".format(claims_payment_amount_new),
+                    data["sa_postings_sa_transno"])
+    else:
+        description3 = ""
+        SQL_claim_dets_update = ""
+    return SQL_claims_payment_update + "\n\n" + SQL_claims_payment_delete + "\n\n" + SQL_sa_posting_update + "\n\n" + SQL_sa_posting_delete + "\n\n" + SQL_claim_dets_update + "\n\nPovzetek popravkov iz zgornjih SQL ukazov:\n\n" + description1 + "\n\n" + description2 + "\n\n" + description3 + "\n\nPriložen izvoz trenutnega stanja tabel za polico {}.".format(data["policy_policy_no"])
 
 def main():
     path = getcwd().replace("\\", "\\\\") + "\\\\"
@@ -92,6 +113,7 @@ def main():
         filename_input = input("Ime .xlsx datoteke s tabelami o polici (X + ENTER za izhod): ")
         if filename_input in ("x", "X"): quit()
         try:
+            if filename_input.find(".") == -1: filename_input += ".xlsx"
             wb = getWorkbook(filename_input, path)
             break
         except FileNotFoundError: print("Datoteka ne obstaja. Poskusi znova.")

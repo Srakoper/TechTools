@@ -160,6 +160,7 @@ def main():
         filename_input = input("Ime .xlsx datoteke s tabelami o polici (X + ENTER za izhod): ")
         if filename_input in ("x", "X"): quit()
         try:
+            if filename_input.find(".") == -1: filename_input += ".xlsx"
             wb = getWorkbook(filename_input, path)
             break
         except FileNotFoundError: print("Datoteka ne obstaja. Poskusi znova.")
