@@ -15,7 +15,8 @@ def stringsColumn():
             else:
                 if lines[i][-2] == ",": line_quotes = "'" + lines[i].strip()[:-1] + "',\n"
                 else: line_quotes = "'" + lines[i].strip() + "',\n"
-        lines_quotes.append(line_quotes)
+        if (i + 1) % 1000 == 0: lines_quotes.append(line_quotes[:-2] + "\n\n{} VNOSOV\n\n".format(i + 1))
+        else: lines_quotes.append(line_quotes)
     fh = open("stringsColumn.txt", "w")
     for line in lines_quotes: fh.write(line)
     fh.close()
