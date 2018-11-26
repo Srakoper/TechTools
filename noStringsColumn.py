@@ -1,6 +1,7 @@
-def stringsColumn():
+def noStringsColumn():
     """
     Reads data from file and adds comma at the EOL if not present.
+    Requires input data as a list of lines.
     Writes data to file noStringsColumn.txt.
     """
     fh = open("input.txt")
@@ -22,7 +23,7 @@ def stringsColumn():
     print("Data saved to file noStringsColumn.txt.")
         
 def main():
-    stringsColumn()
+    soStringsColumn()
 
 if __name__ == "__main__":
     main()

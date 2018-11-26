@@ -1,6 +1,7 @@
 def stringsColumn():
     """
     Reads data from file and encloses every line in single quotation marks, adds comma at the EOL if not present.
+    Requires input data as a list of lines.
     Writes stringified data to file stringsColumn.txt.
     """
     fh = open("input.txt")
