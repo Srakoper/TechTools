@@ -152,7 +152,7 @@ def generateOutput(data, y, m, sign_date):
                 "sysdate",
                 "N",
                 "A")
-    return SQL_policy + "\n\n" + SQL_pol_benf  + "\n\n" + SQL_pol_benf_17 + "\n\n" + SQL_pol_endorsments + "\n\nPovzetek popravkov iz zgornjih SQL ukazov:\n\n" + description + "\n\nPriložen izvoz trenutnega stanja tabel za polico {}.".format(data["policy_policy_no"])
+    return "<pre>\n<code class=\"sql\">\n" + SQL_policy + "\n\n" + SQL_pol_benf  + "\n\n" + SQL_pol_benf_17 + "\n\n" + SQL_pol_endorsments + "\n</code>\n</pre>" + "\n\nPovzetek popravkov iz zgornjih SQL ukazov:\n\n" + description + "\n\nPriložen izvoz trenutnega stanja tabel za polico {}.".format(data["policy_policy_no"])
 
 def main():
     path = getcwd().replace("\\", "\\\\") + "\\\\"

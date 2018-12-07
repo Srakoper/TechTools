@@ -105,7 +105,7 @@ def generateOutput(data):
     else:
         description3 = ""
         SQL_claim_dets_update = ""
-    return SQL_claims_payment_update + "\n\n" + SQL_claims_payment_delete + "\n\n" + SQL_sa_posting_update + "\n\n" + SQL_sa_posting_delete + "\n\n" + SQL_claim_dets_update + "\n\nPovzetek popravkov iz zgornjih SQL ukazov:\n\n" + description1 + "\n\n" + description2 + "\n\n" + description3 + "\n\nPriložen izvoz trenutnega stanja tabel za polico {}.".format(data["policy_policy_no"])
+    return "<pre>\n<code class=\"sql\">\n" + SQL_claims_payment_update + "\n\n" + SQL_claims_payment_delete + "\n\n" + SQL_sa_posting_update + "\n\n" + SQL_sa_posting_delete + "\n\n" + SQL_claim_dets_update + "\n</code>\n</pre>" + "\n\nPovzetek popravkov iz zgornjih SQL ukazov:\n\n" + description1 + "\n\n" + description2 + "\n\n" + description3 + "\n\nPriložen izvoz trenutnega stanja tabel za polico {}.".format(data["policy_policy_no"])
 
 def main():
     path = getcwd().replace("\\", "\\\\") + "\\\\"
