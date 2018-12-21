@@ -23,7 +23,7 @@ def noStringsColumn():
     print("Data saved to file noStringsColumn.txt.")
         
 def main():
-    soStringsColumn()
+    noStringsColumn()
 
 if __name__ == "__main__":
     main()
