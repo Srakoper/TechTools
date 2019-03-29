@@ -86,7 +86,7 @@ def getData(workbook):
     except AssertionError: warning = "PREM_STOP_DATE z BENFNO = 17 v pol_benf ni za 1 dan manjši od ostalih PREM_STOP_DATE."
     if policy_next_payout_date and workbook["Select scholar_rep"]["B2"].value:
         scholar_rep = True
-        claim_pers_dets_claim_id = int(workbook["Select claim_pers_dets"]["B2"].value)
+        claim_pers_dets_id = int(workbook["Select claim_pers_dets"]["D2"].value)
         sa_postings = workbook["Select sa_postings"]
         sa_postings_sa_postingno = list()
         for i in range(1, len(sa_postings["F"])):
@@ -94,12 +94,16 @@ def getData(workbook):
         claim_dets = workbook["Select claim_dets"]
         claim_dets_claims = dict()
         for i in range(1, len(claim_dets["G"])):
-            if claim_dets["G"][i].value == 1: claim_dets_claims["claim_stage_1"] = {"claim_id"   : claim_dets["D"][i].value,
-                                                                                    "claim_amt"  : claim_dets["F"][i].value,
-                                                                                    "benfno"     : claim_dets["K"][i].value}
-            if claim_dets["G"][i].value == 5: claim_dets_claims["claim_stage_5"] = {"claim_id"   : claim_dets["D"][i].value,
-                                                                                    "claim_amt"  : claim_dets["F"][i].value,
-                                                                                    "benfno"     : claim_dets["K"][i].value}
+            if claim_dets["G"][i].value == 1: claim_dets_claims["claim_stage_1"] = {"claim_id"    : claim_dets["D"][i].value,
+                                                                                    "claim_amt"   : claim_dets["F"][i].value,
+                                                                                    "action_date" : claim_dets["I"][i].value,
+                                                                                    "date_created": claim_dets["J"][i].value,
+                                                                                    "benfno"      : claim_dets["K"][i].value}
+            if claim_dets["G"][i].value == 5: claim_dets_claims["claim_stage_5"] = {"claim_id"    : claim_dets["D"][i].value,
+                                                                                    "claim_amt"   : claim_dets["F"][i].value,
+                                                                                    "action_date" : claim_dets["I"][i].value,
+                                                                                    "date_created": claim_dets["J"][i].value,
+                                                                                    "benfno"      : claim_dets["K"][i].value}
         ua_holdings = workbook["Select ua_holdings"]
         ua_holdings_funds = set()
         ua_holdings_all = dict()
@@ -130,16 +134,16 @@ def getData(workbook):
         for i in range(1, len(pol_endorsements["P"])):
             if pol_endorsements["P"][i].value and pol_endorsements["P"][i].value.strftime("%#d.%#m.%Y") == policy_payout_start_date_minus_1.strftime("%#d.%#m.%Y"): benfnos_all.append(pol_endorsements["K"][i].value)
         for i in range(1, len(sheet2["I"])):
-            if sheet2["I"][i].value in benfnos_all and sheet2["N"][i].value == "L": benfnos.append(sheet2["I"][i].value)
+            if sheet2["I"][i].value in benfnos_all and sheet2["N"][i].value == "L": benfnos.append((sheet2["I"][i].value, int(sheet2["G"][i].value)))
         if benfnos: benfnos = tuple(benfnos)
         else: benfnos = None
     else:
-        scholar_rep = False
-        claim_pers_dets_claim_id = None
+        scholar_rep              = False
+        claim_pers_dets_id       = None
         sa_postings_sa_postingno = None
-        claim_dets_claims = None
-        ua_holdings_all = None
-        benfnos = None
+        claim_dets_claims        = None
+        ua_holdings_all          = None
+        benfnos                  = None
     return {"warning"                          : warning,
             "policy_policy_no"                 : policy_policy_no,
             "policy_pol_ref_no"                : policy_pol_ref_no,
@@ -154,7 +158,7 @@ def getData(workbook):
             "pol_benf_prem_stop_date"          : pol_benf_prem_stop_date,
             "pol_benf_prem_stop_date_17"       : pol_benf_prem_stop_date_17,
             "scholar_rep"                      : scholar_rep,
-            "claim_pers_dets_claim_id"         : claim_pers_dets_claim_id,
+            "claim_pers_dets_id"               : claim_pers_dets_id,
             "sa_postings_sa_postingno"         : sa_postings_sa_postingno,
             "claim_dets_claims"                : claim_dets_claims,
             "ua_holdings_all"                  : ua_holdings_all,
@@ -207,12 +211,12 @@ def generateOutput(data, y, m, sign_date):
     SQL_pol_endorsments = list()
     if data["benfnos"]:
         for benfno in data["benfnos"]:
-            SQL_pol_benf_act.append("UPDATE pol_benf\n   SET BENF_STAT = 'A'\n WHERE BENFNO = {};".format(benfno))
+            SQL_pol_benf_act.append("UPDATE pol_benf\n   SET BENF_STAT = 'A'\n WHERE POL_BENF_ID = {};".format(benfno[1]))
             SQL_pol_endorsments.append("INSERT\n  INTO pol_endorsements\n       (SITENO,\n        ENDORSE_TYPE,\n        POL_REF_NO,\n        BENFNO\n        CHANGE_DESC,\n        OLD_VALUE,\n        NEW_VALUE,\n        EFFECTIVE_DATE,\n        TRANSACTION_DATE,\n        LETTER_SENT,\n        STATUS)\nVALUES ({},\n        {},\n        {},\n        {},\n        '{}',\n        '{}',\n        '{}',\n        '{}',\n        {},\n        '{}',\n        '{}');"\
                 .format(7,
                         21,
                         str_policy_pol_ref_no,
-                        benfno,
+                        benfno[0],
                         "Reinstate Benefits",
                         "Lapsed",
                         "Active",
@@ -234,25 +238,23 @@ def generateOutput(data, y, m, sign_date):
     if data["scholar_rep"]:
         SQL_scholar_rep = "DELETE\n  FROM scholar_rep\n WHERE POLICY_NO = '{}';"\
             .format(str_policy_policy_no)
-        SQL_claim_pers_dets = "UPDATE claim_pers_dets\n   SET SET_CODE = 'R'\n WHERE CLAIM_ID = {};"\
-            .format(data["claim_pers_dets_claim_id"])
+        SQL_claim_pers_dets = "UPDATE claim_pers_dets\n   SET SET_CODE = 'R'\n WHERE ID = {};"\
+            .format(data["claim_pers_dets_id"])
         SQL_sa_postings = "DELETE\n  FROM sa_postings\n WHERE SA_POSTINGNO IN {};".format(tuple(data["sa_postings_sa_postingno"]))
-        SQL_claim_dets_7 = "INSERT\n  INTO claim_dets\n       (POL_REF_NO,\n        POLICY_NO,\n        CLAIM_ID,\n        CLAIM_AMT,\n        CLAIM_STAGE,\n        DESCRIPTION,\n        BENFNO)\nVALUES ({},\n        '{}',\n        {},\n        {},\n        {},\n        '{}',\n        {});"\
-            .format(str_policy_pol_ref_no,
-                    str_policy_policy_no,
-                    data["claim_dets_claims"]["claim_stage_1"]["claim_id"],
-                    0,
+        SQL_claim_dets_7 = "INSERT\n  INTO claim_dets\n       (CLAIM_ID,\n        SITENO,\n        ACTION_DATE,\n        DESCRIPTION,\n        BENFNO,\n        CLAIM_STAGE)\nVALUES ({},\n        {},\n        TO_DATE('{}', 'dd.mm.yyyy hh24:mi:ss'),\n        '{}',\n        {},\n        {});"\
+            .format(data["claim_dets_claims"]["claim_stage_1"]["claim_id"],
                     7,
+                    data["claim_dets_claims"]["claim_stage_1"]["action_date"].strftime("%#d.%#m.%Y %#H:%M:%S"),
                     "Cancelled Surrender (Partial) Claim",
-                    data["claim_dets_claims"]["claim_stage_1"]["benfno"])
-        SQL_claim_dets_11 = "INSERT\n  INTO claim_dets\n       (POL_REF_NO,\n        POLICY_NO,\n        CLAIM_ID,\n        CLAIM_AMT,\n        CLAIM_STAGE,\n        DESCRIPTION,\n        BENFNO)\nVALUES ({},\n        '{}',\n        {},\n        {},\n        {},\n        '{}',\n        {});"\
-            .format(str_policy_pol_ref_no,
-                    str_policy_policy_no,
-                    data["claim_dets_claims"]["claim_stage_5"]["claim_id"],
-                    0,
-                    11,
+                    data["claim_dets_claims"]["claim_stage_1"]["benfno"],
+                    7)
+        SQL_claim_dets_11 = "INSERT\n  INTO claim_dets\n       (CLAIM_ID,\n        SITENO,\n        ACTION_DATE,\n        DESCRIPTION,\n        BENFNO,\n        CLAIM_STAGE)\nVALUES ({},\n        {},\n        TO_DATE('{}', 'dd.mm.yyyy hh24:mi:ss'),\n        '{}',\n        {},\n        {});" \
+            .format(data["claim_dets_claims"]["claim_stage_5"]["claim_id"],
+                    7,
+                    data["claim_dets_claims"]["claim_stage_5"]["action_date"].strftime("%#d.%#m.%Y %#H:%M:%S"),
                     "Reinstate Partial Surrender",
-                    data["claim_dets_claims"]["claim_stage_5"]["benfno"])
+                    data["claim_dets_claims"]["claim_stage_5"]["benfno"],
+                    11)
         SQL_ua_holdings = list()
         for fund in data["ua_holdings_all"].keys():
             SQL_ua_holdings_174 = "INSERT\n  INTO ua_holdings\n       (SITENO,\n        DUE_DATE,\n        EFF_DATE,\n        POL_REF_NO,\n        FUNDNO,\n        CURR_NO,\n        BASIC_PREM,\n        TOTAL_PREM,\n        NET_PREM,\n        UNIT_PREM,\n        UNIT_PRICE,\n        UNITS_ALLOCATED,\n        UA_TRANS,\n        BONUS_APP,\n        BENFNO,\n        BENF_ORD,\n        SAV_BENFNO,\n        SAV_BENF_ORD,\n        UA_TRANSNO,\n        UA_EVENTNO)\nVALUES ({},\n        '{}',\n        '{}',\n        {},\n        {},\n        {},\n        {},\n        {},\n        {},\n        {},\n        {},\n        {},\n        '{}',\n        '{}',\n        {},\n        {},\n        {},\n        {},\n        {},\n        {});"\
@@ -301,7 +303,7 @@ def generateOutput(data, y, m, sign_date):
             SQL_ua_holdings.append(SQL_ua_holdings_176)
 
 
-        return "<pre>\n<code class=\"sql\">\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n</code>\n</pre>\n\nPovzetek popravkov iz zgornjih SQL ukazov:\n\nPriložen izvoz trenutnega stanja tabel za polico {}." \
+        return "<pre>\n<code class=\"sql\">\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n</code>\n</pre>\n\nPriložen izvoz trenutnega stanja tabel za polico {}." \
             .format(SQL_policy,
                     SQL_pol_benf,
                     SQL_pol_benf_17,
@@ -315,7 +317,7 @@ def generateOutput(data, y, m, sign_date):
                     "\n\n".join(SQL_pol_endorsments),
                     data["policy_policy_no"])
     else:
-        return "<pre>\n<code class=\"sql\">\n{}\n\n{}\n\n{}\n\n{}\n</code>\n</pre>\n\nPovzetek popravkov iz zgornjih SQL ukazov:\n\nPriložen izvoz trenutnega stanja tabel za polico {}." \
+        return "<pre>\n<code class=\"sql\">\n{}\n\n{}\n\n{}\n\n{}\n</code>\n</pre>\n\nPriložen izvoz trenutnega stanja tabel za polico {}." \
             .format(SQL_policy,
                     SQL_pol_benf,
                     SQL_pol_benf_17,
@@ -325,7 +327,8 @@ def generateOutput(data, y, m, sign_date):
 def main():
     path = getcwd().replace("\\", "\\\\") + "\\\\"
     while True:
-        filename_input = input("Ime .xlsx datoteke s tabelami o polici (X + ENTER za izhod): ")
+        filename_input = "#13807 10063141 trenutno stanje tabel"
+        #filename_input = input("Ime .xlsx datoteke s tabelami o polici (X + ENTER za izhod): ")
         if filename_input in ("x", "X"): quit()
         try:
             if filename_input.find(".") == -1: filename_input += ".xlsx"
