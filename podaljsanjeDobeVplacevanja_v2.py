@@ -65,15 +65,15 @@ def getData(workbook):
     """
     sheet1 = workbook["Select policy"]
     sheet2 = workbook["Select pol_benf"]
-    policy_policy_no                 = int(sheet1["C2"].value)
-    policy_pol_ref_no                = int(sheet1["D2"].value)
+    policy_policy_no                 = int(round(float(sheet1["C2"].value)))
+    policy_pol_ref_no                = int(round(sheet1["D2"].value))
     policy_end_date                  = sheet1["I2"].value
-    policy_term                      = int(sheet1["J2"].value)
+    policy_term                      = int(round(sheet1["J2"].value))
     policy_payout_start_date         = sheet1["S2"].value
     policy_payout_start_date_minus_1 = policy_payout_start_date - relativedelta(days=1) if policy_payout_start_date else None
     policy_next_payout_date          = sheet1["T2"].value
-    pol_benf_term                    = int(sheet2["Q2"].value)
-    pol_benf_payment_term            = int(sheet2["R2"].value)
+    pol_benf_term                    = int(round(sheet2["Q2"].value))
+    pol_benf_payment_term            = int(round(sheet2["R2"].value))
     pol_benf_end_date                = sheet2["V2"].value
     pol_benf_prem_stop_date          = sheet2["W2"].value
     pol_benf_prem_stop_date_17       = None
@@ -134,7 +134,7 @@ def getData(workbook):
         for i in range(1, len(pol_endorsements["P"])):
             if pol_endorsements["P"][i].value and pol_endorsements["P"][i].value.strftime("%#d.%#m.%Y") == policy_payout_start_date_minus_1.strftime("%#d.%#m.%Y"): benfnos_all.append(pol_endorsements["K"][i].value)
         for i in range(1, len(sheet2["I"])):
-            if sheet2["I"][i].value in benfnos_all and sheet2["N"][i].value == "L": benfnos.append((sheet2["I"][i].value, int(sheet2["G"][i].value)))
+            if sheet2["I"][i].value in benfnos_all and sheet2["N"][i].value == "L": benfnos.append((sheet2["I"][i].value, int(round(sheet2["G"][i].value))))
         if benfnos: benfnos = tuple(benfnos)
         else: benfnos = None
     else:
@@ -212,7 +212,7 @@ def generateOutput(data, y, m, sign_date):
     if data["benfnos"]:
         for benfno in data["benfnos"]:
             SQL_pol_benf_act.append("UPDATE pol_benf\n   SET BENF_STAT = 'A'\n WHERE POL_BENF_ID = {};".format(benfno[1]))
-            SQL_pol_endorsments.append("INSERT\n  INTO pol_endorsements\n       (SITENO,\n        ENDORSE_TYPE,\n        POL_REF_NO,\n        BENFNO\n        CHANGE_DESC,\n        OLD_VALUE,\n        NEW_VALUE,\n        EFFECTIVE_DATE,\n        TRANSACTION_DATE,\n        LETTER_SENT,\n        STATUS)\nVALUES ({},\n        {},\n        {},\n        {},\n        '{}',\n        '{}',\n        '{}',\n        '{}',\n        {},\n        '{}',\n        '{}');"\
+            SQL_pol_endorsments.append("INSERT\n  INTO pol_endorsements\n       (SITENO,\n        ENDORSE_TYPE,\n        POL_REF_NO,\n        BENFNO,\n        CHANGE_DESC,\n        OLD_VALUE,\n        NEW_VALUE,\n        EFFECTIVE_DATE,\n        TRANSACTION_DATE,\n        LETTER_SENT,\n        STATUS)\nVALUES ({},\n        {},\n        {},\n        {},\n        '{}',\n        '{}',\n        '{}',\n        '{}',\n        {},\n        '{}',\n        '{}');"\
                 .format(7,
                         21,
                         str_policy_pol_ref_no,
@@ -321,14 +321,13 @@ def generateOutput(data, y, m, sign_date):
             .format(SQL_policy,
                     SQL_pol_benf,
                     SQL_pol_benf_17,
-                    SQL_pol_endorsments,
+                    "\n\n".join(SQL_pol_endorsments),
                     data["policy_policy_no"])
 
 def main():
     path = getcwd().replace("\\", "\\\\") + "\\\\"
     while True:
-        filename_input = "#13807 10063141 trenutno stanje tabel"
-        #filename_input = input("Ime .xlsx datoteke s tabelami o polici (X + ENTER za izhod): ")
+        filename_input = input("Ime .xlsx datoteke s tabelami o polici (X + ENTER za izhod): ")
         if filename_input in ("x", "X"): quit()
         try:
             if filename_input.find(".") == -1: filename_input += ".xlsx"
