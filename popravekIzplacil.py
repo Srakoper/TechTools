@@ -48,9 +48,10 @@ def getData(workbook):
                 sa_postings_sa_transno = None
         if sheet3["B"][i].value == "Personal Income tax (Maturity)" or sheet3["B"][i].value == "Personal Income tax (Surrender)":
             if float(sheet3["P"][i].value) == claims_payment_amount_1 or float(sheet3["Q"][i].value) == claims_payment_amount_1: sa_postings_personal_income_tax_ids.append(sheet3["D"][i].value)
-    for i in range(1, len(sheet4["F"])):
-        if int(sheet4["G"][i].value) == 6 and "{:.2f}".format(sheet4["F"][i].value) != "{:.2f}".format(claims_payment_amount_1 + claims_payment_amount_2): claims_dets_claim_amt = True
-        else: claims_dets_claim_amt = False
+    for i in range(0, len(sheet4["F"])):
+        try:
+            if int(sheet4["G"][i].value) == 6 and "{:.2f}".format(sheet4["F"][i].value) != "{:.2f}".format(claims_payment_amount_1 + claims_payment_amount_2): claims_dets_claim_amt = True
+        except ValueError: claims_dets_claim_amt = False
     return {"policy_policy_no": policy_policy_no,
             "claims_payment_claims_payment_id_1": claims_payment_claims_payment_id_1,
             "claims_payment_claims_payment_id_2": claims_payment_claims_payment_id_2,
@@ -103,9 +104,9 @@ def generateOutput(data):
             .format("{:.2f}".format(claims_payment_amount_new),
                     data["sa_postings_sa_transno"])
     else:
-        description3 = ""
-        SQL_claim_dets_update = ""
-    return "<pre>\n<code class=\"sql\">\n" + SQL_claims_payment_update + "\n\n" + SQL_claims_payment_delete + "\n\n" + SQL_sa_posting_update + "\n\n" + SQL_sa_posting_delete + "\n\n" + SQL_claim_dets_update + "\n</code>\n</pre>" + "\n\nPovzetek popravkov iz zgornjih SQL ukazov:\n\n" + description1 + "\n\n" + description2 + "\n\n" + description3 + "\n\nPriložen izvoz trenutnega stanja tabel za polico {}.".format(data["policy_policy_no"])
+        description3 = False
+        SQL_claim_dets_update = False
+    return "<pre>\n<code class=\"sql\">\n" + SQL_claims_payment_update + "\n\n" + SQL_claims_payment_delete + "\n\n" + SQL_sa_posting_update + "\n\n" + SQL_sa_posting_delete + ("\n\n" + SQL_claim_dets_update if SQL_claim_dets_update else "") + "\n</code>\n</pre>" + "\n\nPovzetek popravkov iz zgornjih SQL ukazov:\n\n" + description1 + "\n\n" + description2 + ("\n\n" + description3 if description3 else "") + "\n\nPriložen izvoz trenutnega stanja tabel za polico {}.".format(data["policy_policy_no"])
 
 def main():
     path = getcwd().replace("\\", "\\\\") + "\\\\"

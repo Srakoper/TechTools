@@ -4,8 +4,8 @@ def compareValues(file1, file2):
     :param file1: str; filename of values from list 1, requires values as list of rows
     :param file2: str; filename of values from list 2, requires values as list of rows
     """
-    lines1 = open(file1).readlines()
-    lines2 = open(file2).readlines()
+    lines1 = [line.rstrip() for line in open(file1).readlines()]
+    lines2 = [line.rstrip() for line in open(file2).readlines()]
     missing1 = list()
     missing2 = list()
     for line in lines1:
