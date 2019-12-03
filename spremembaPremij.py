@@ -200,11 +200,12 @@ def main():
             break
         except FileNotFoundError: print("Datoteka ne obstaja. Poskusi znova.")
     while True:
-        effective_date = input("Datum podpisa v formatu D.M.YYYY: ")
+        effective_date = input("Datum podpisa/veljavnosti v formatu D.M.YYYY: ")
         if effective_date in ("x", "X"): quit()
         if verifyDate(effective_date): break
         else: print("Vnesi datum v veljavnem D.M.YYYY formatu.")
     fh = open("sprememba_premij.txt", "w")
+    print(getBenefitIDs(wb))
     fh.write(generateOutput(getPolicyNo(wb), OrderedDict(getChanges(getBenefitIDs(wb))), effective_date))
     fh.close()
     print("Ustvarjeni podatki shranjeni v datoteko sprememba_premij.txt.")

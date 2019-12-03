@@ -6,7 +6,7 @@ Generates appropriate UPDATE and INSERT SQL commands, as well as a summary of th
 Instructions for use:
     1. export tables for a given policy and save .xlsx file in the directory containing this script
     3. run podaljsanjeDobeVplacevanja.py
-    4. enter file name of .xlsx file, extension period, amd sign date
+    4. enter file name of .xlsx file, extension period, and sign date
     5. generated data is saved to podaljsanje_dobe.txt file in the directory containing this script
 """
 from os import getcwd
@@ -58,11 +58,13 @@ def getData(workbook):
     sheet2 = workbook["Select pol_benf"]
     policy_policy_no           = int(sheet1["C2"].value)
     policy_pol_ref_no          = int(sheet1["D2"].value)
+    print(policy_policy_no, policy_pol_ref_no)
     policy_end_date            = sheet1["I2"].value
     policy_term                = int(sheet1["J2"].value)
     policy_payout_start_date   = sheet1["S2"].value
     pol_benf_term              = int(sheet2["Q2"].value)
     pol_benf_payment_term      = int(sheet2["R2"].value)
+    print(pol_benf_payment_term)
     pol_benf_end_date          = sheet2["V2"].value
     pol_benf_prem_stop_date    = sheet2["W2"].value
     pol_benf_prem_stop_date_17 = None
