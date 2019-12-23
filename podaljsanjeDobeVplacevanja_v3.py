@@ -87,6 +87,10 @@ def getData(workbook):
     warning = None
     try: assert str(pol_benf_prem_stop_dates[pol_benf_first_benf] - pol_benf_prem_stop_dates[17]) == "1 day, 0:00:00"
     except AssertionError: warning = "PREM_STOP_DATE z BENFNO = 17 v pol_benf ni za 1 dan manjši od ostalih PREM_STOP_DATE."
+    try: assert pol_benf_first_benf != 17
+    except AssertionError:
+        if warning: warning += "\nPrvi BENFNO ni različen od 17."
+        else: warning = "Prvi BENFNO ni različen od 17."
     if policy_next_payout_date and workbook["Select scholar_rep"]["B2"].value:
         scholar_rep = True
         claim_pers_dets_id = int(workbook["Select claim_pers_dets"]["D2"].value)
