@@ -72,7 +72,8 @@ def getData(workbook):
     policy_payout_start_date         = sheet1["S2"].value
     policy_payout_start_date_minus_1 = policy_payout_start_date - relativedelta(days=1) if policy_payout_start_date else None
     policy_next_payout_date          = sheet1["T2"].value
-    pol_benf_term                    = int(round(sheet2["Q2"].value))
+  # pol_benf_term                    = int(round(sheet2["Q2"].value))
+    pol_benf_terms                   = dict()
     pol_benf_payment_terms           = dict()
     pol_benf_end_dates               = dict()
   # pol_benf_end_date                = sheet2["V2"].value
@@ -81,6 +82,7 @@ def getData(workbook):
     for i in range(1, len(sheet2["R"])):
         if sheet2["R"][i].value:
             if i == 1: pol_benf_first_benf = int(sheet2["I"][i].value)
+            pol_benf_terms[int(sheet2["I"][i].value)] = int(round(sheet2["Q"][i].value))
             pol_benf_payment_terms[int(sheet2["I"][i].value)] = int(round(sheet2["R"][i].value))
             pol_benf_end_dates[int(sheet2["I"][i].value)] = sheet2["V"][i].value
             pol_benf_prem_stop_dates[int(sheet2["I"][i].value)] = sheet2["W"][i].value
@@ -159,7 +161,8 @@ def getData(workbook):
             "policy_payout_start_date"         : policy_payout_start_date,
             "policy_payout_start_date_minus_1" : policy_payout_start_date_minus_1,
             "policy_next_payout_date"          : policy_next_payout_date,
-            "pol_benf_term"                    : pol_benf_term,
+          # "pol_benf_term"                    : pol_benf_term,
+            "pol_benf_terms"                   : pol_benf_terms,
             "pol_benf_payment_terms"           : pol_benf_payment_terms,
             "pol_benf_end_dates"               : pol_benf_end_dates,
           # "pol_benf_end_date"                : pol_benf_end_date,
@@ -197,9 +200,10 @@ def generateOutput(data, y, m, sign_date):
     str_policy_term_new                  = data["policy_term"] + (y * 12 + m)
     str_pol_benf_payment_term_new        = data["pol_benf_payment_terms"][data["pol_benf_first_benf"]] + (y * 12 + m)
     str_pol_benf_payment_term_17_new     = data["pol_benf_payment_terms"][17] + (y * 12 + m)
-    str_pol_benf_term_new                = data["pol_benf_term"] + (y * 12 + m)
+    str_pol_benf_term_new                = data["pol_benf_terms"][data["pol_benf_first_benf"]] + (y * 12 + m)
+    str_pol_benf_term_17_new             = data["pol_benf_terms"][17] + (y * 12 + m)
     str_pol_benf_end_date_new            = pol_benf_end_date_new.strftime("%#d.%#m.%Y")
-    str_pol_benf_end_date_17_new          = pol_benf_end_date_17_new.strftime("%#d.%#m.%Y")
+    str_pol_benf_end_date_17_new         = pol_benf_end_date_17_new.strftime("%#d.%#m.%Y")
     str_pol_benf_prem_stop_date_17_new   = pol_benf_prem_stop_date_17_new.strftime("%#d.%#m.%Y")
     str_pol_benf_prem_stop_date_new      = pol_benf_prem_stop_date_new.strftime("%#d.%#m.%Y")
     SQL_policy          = "UPDATE policy\n   SET END_DATE = '{}',\n       PAYOUT_START_DATE = '{}',\n       TERM = {},\n       NEXT_PAYOUT_DATE = NULL\n WHERE POL_REF_NO = {};"\
@@ -215,7 +219,7 @@ def generateOutput(data, y, m, sign_date):
                 str_policy_pol_ref_no)
     SQL_pol_benf_17     = "UPDATE pol_benf\n   SET PAYMENT_TERM = {},\n       TERM = {},\n       END_DATE = '{}',\n       PREM_STOP_DATE = '{}'\n WHERE POL_REF_NO = {}\n   AND BENFNO = 17;"\
         .format(str_pol_benf_payment_term_17_new,
-                str_pol_benf_term_new,
+                str_pol_benf_term_17_new,
                 str_pol_benf_end_date_17_new,
                 str_pol_benf_prem_stop_date_17_new,
                 str_policy_pol_ref_no)
