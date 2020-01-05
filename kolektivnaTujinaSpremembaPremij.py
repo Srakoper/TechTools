@@ -35,7 +35,15 @@ class Policy(object):
     def getNew_gross_premium(self): return self.new_gross_premium
     def getMonth(self):             return self.month
     def getEffective_date(self):    return self.effective_date
-    def __repr__(self):             return f"policy_no: {self.policy_no}\npol_ref_no: {self.pol_ref_no}\nstart_date: {self.start_date}\nmonth: {self.month}\neffective_date: {self.effective_date}\nduration: {self.duration}\ncancelled_premium: {self.cancelled_premium}\nnew_gross_premium {self.new_gross_premium}"
+    def __repr__(self):             return "policy_no: {}\npol_ref_no: {}\nstart_date: {}\nmonth: {}\neffective_date: {}\nduration: {}\ncancelled_premium: {}\nnew_gross_premium {}" \
+                                           .format(self.policy_no,
+                                                   self.pol_ref_no,
+                                                   self.start_date,
+                                                   self.month,
+                                                   self.effective_date,
+                                                   self.duration,
+                                                   self.cancelled_premium,
+                                                   self.new_gross_premium)
 
 def getWorkbook(filename, dir):
     """
