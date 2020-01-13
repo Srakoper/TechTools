@@ -91,12 +91,12 @@ def generateOutput(policies_data, current_dates):
     for policy in policies_data:
         policy.setMonth(policy.getStart_date())
         policy.setEffectiveDate(current_dates, policy.getMonth())
+        output_policy.append("UPDATE policy SET BASIC_PREMIUM = {}, GROSS_PREMIUM = {} WHERE POL_REF_NO = {};" \
+                             .format(policy.getNew_gross_premium(),
+                                     policy.getNew_gross_premium(),
+                                     policy.getPol_ref_no()))
         if policy.getEffective_date(): # checks if effective_date is set
-            output_policy.append("UPDATE policy SET BASIC_PREMIUM = {}, GROSS_PREMIUM = {} WHERE pol_ref_no = {};" \
-                                 .format(policy.getNew_gross_premium(),
-                                         policy.getNew_gross_premium(),
-                                         policy.getPol_ref_no()))
-            output_pol_benf.append("UPDATE pol_benf SET PREMIUM = {} WHERE pol_ref_no = {};" \
+            output_pol_benf.append("UPDATE pol_benf SET PREMIUM = {} WHERE POL_REF_NO = {};" \
                                    .format(policy.getNew_gross_premium(),
                                            policy.getPol_ref_no()))
             output_pol_endorsements.append("INSERT INTO pol_endorsements (ENDORSE_TYPE, POL_REF_NO, BENFNO, CHANGE_DESC, BENF_ORD, OLD_VALUE, NEW_VALUE, EFFECTIVE_DATE, TRANSACTION_DATE) VALUES (7, {}, 80, 'Change of Premium', 1, {}, {}, '{}', sysdate);" \
