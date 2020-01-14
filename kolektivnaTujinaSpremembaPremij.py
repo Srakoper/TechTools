@@ -99,7 +99,7 @@ def generateOutput(policies_data, current_dates):
             output_pol_benf.append("UPDATE pol_benf SET PREMIUM = {} WHERE POL_REF_NO = {};" \
                                    .format(policy.getNew_gross_premium(),
                                            policy.getPol_ref_no()))
-            output_pol_endorsements.append("INSERT INTO pol_endorsements (ENDORSE_TYPE, POL_REF_NO, BENFNO, CHANGE_DESC, BENF_ORD, OLD_VALUE, NEW_VALUE, EFFECTIVE_DATE, TRANSACTION_DATE) VALUES (7, {}, 80, 'Change of Premium', 1, {}, {}, '{}', sysdate);" \
+            output_pol_endorsements.append("INSERT INTO pol_endorsements (SITENO, ENDORSE_TYPE, POL_REF_NO, BENFNO, CHANGE_DESC, BENF_ORD, OLD_VALUE, NEW_VALUE, EFFECTIVE_DATE, TRANSACTION_DATE) VALUES (7, 7, {}, 80, 'Change of Premium', 1, {}, {}, '{}', sysdate);" \
                                            .format(policy.getPol_ref_no(),
                                                    policy.getCancelled_premium(),
                                                    policy.getNew_gross_premium(),
@@ -121,10 +121,10 @@ def main():
             break
         except FileNotFoundError: print("Datoteka ne obstaja. Poskusi znova.")
     policies = getData(wb)
-    fh = open("kolektivna_tujina_sprememba_premij_{}_{}.txt".format(current_month_year[1], current_month_year[0]), "w")
-    fh.write('<pre>\n<code class="sql">\n{}\n</code>\n</pre>'.format(generateOutput(policies, current_month_year)))
+    fh = open("kolektivna_tujina_sprememba_premij_{}_{}.txt".format(current_month_year[1], "0" + str(current_month_year[0]) if len(str(current_month_year[0])) == 1 else current_month_year[0]), "w")
+    fh.write("{}".format(generateOutput(policies, current_month_year)))
     fh.close()
-    print("Ustvarjeni podatki shranjeni v datoteko kolektivna_tujina_sprememba_premij_{}_{}.txt".format(current_month_year[1], current_month_year[0]))
+    print("Ustvarjeni podatki shranjeni v datoteko kolektivna_tujina_sprememba_premij_{}_{}.txt".format(current_month_year[1], "0" + str(current_month_year[0]) if len(str(current_month_year[0])) == 1 else current_month_year[0]))
 
 if __name__ == "__main__":
     main()
