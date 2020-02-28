@@ -1,13 +1,13 @@
 """
 Script for automatic processing of "Sprememba premij/nevarnostnega razreda" request tickets.
-Requires exported table e2_nezgoda_premija for a given policy in a .xlsx format. Use 'SELECT * FROM e2_nezgoda_premija WHERE sifra_ponudbe = <policy_code>' SQL command to generate data for export.
+Requires exported tables e2_nezgoda_premija and e2_nezgodna_premija_bruto for a given policy in a .xlsx format. Use 'SELECT * FROM e2_nezgoda_premija WHERE sifra_ponudbe = <policy_code>; SELECT * FROM e2_nezgoda_premija_bruto WHERE sifra_ponudbe = <policy_code>;' SQL commands to generate data for export.
 Generates appropriate INSERT SQL commands.
 Instructions for use:
-    1. export the table e2_nezgoda_premija for a given policy and save .xlsx file in the directory containing this script
-    3. run spremembaPremij.py
+    1. export the tables e2_nezgoda_premija and e2_nezgoda_premija_bruto for a given policy and save data as a single .xlsx file in the directory containing this script
+    3. run spremembaPremijNevarnostnegaRazreda.py
     4. enter file name of .xlsx file
     5. Enter effective date for new premium values
-    6. Enter new monthly and annual premium values for given benefits ifa applicable.
+    6. Enter new monthly and annual premium values for given benefits if applicable.
     5. generated data is saved to sprememba_premij.txt file in the directory containing this script
 """
 from os import getcwd
@@ -55,7 +55,7 @@ def getPolicyNo(workbook):
     :param workbook: Workbook object
     :return: int; policy number
     """
-    try: sheet = workbook["SQL Results"]
+    try: sheet = workbook["Select e2_nezgoda_premija"]
     except: return -1
     return int(sheet["B"][2].value)
 
@@ -65,12 +65,12 @@ def getBenefitIDs(workbook):
     :param workbook: Workbook object
     :return: tuple of ints; id number of benefits on policy, -1 if sheet 'SQL Results' not present
     """
-    try: sheet = workbook["SQL Results"]
+    try: sheet = workbook["Select e2_nezgoda_premija"]
     except: return -1
-    benefit_ids = list()
+    benefit_ids = set()
     for i in range(1, len(sheet["C"])):
-        if sheet["C"][i].value: benefit_ids.append(int(sheet["C"][i].value))
-    return tuple(benefit_ids)
+        if sheet["C"][i].value: benefit_ids.add(int(sheet["C"][i].value))
+    return tuple(sorted(list(benefit_ids)))
 
 def getBenefit(benefit_id):
     """
@@ -158,10 +158,31 @@ def getChanges(benefit_ids):
                     change = float(change.strip().replace(",", "."))
                     if change: premium_changes.append(change)
                     break
-                except: print("Ker je bila spremenjena MESEČNA premija za kritje '{}' (ID = {}), mora tudi nova vrednost LETNE premije biti številka.".\
-                              format(getBenefit(benefit_id),
+                except: print("Ker je bila spremenjena MESEČNA premija za kritje '{}' (ID = {}), mora tudi nova vrednost LETNE premije biti številka."\
+                              .format(getBenefit(benefit_id),
                                      benefit_id))
         if premium_changes: changes[benefit_id] = tuple(premium_changes)
+    premium_changes_bruto = list()
+    while True:
+        change = input("Nova vrednost MESEČNE bruto premije oziroma prazno, če ni spremembe: ")
+        if change == "":
+            break
+        else:
+            try:
+                change = float(change.strip().replace(",", "."))
+                if change: premium_changes_bruto.append(change)
+                break
+            except:
+                print("Nova vrednost premije mora biti številka ali prazno.")
+    if premium_changes_bruto:
+        while True:
+            change = input("Nova vrednost LETNE bruto premije: ")
+            try:
+                change = float(change.strip().replace(",", "."))
+                if change: premium_changes_bruto.append(change)
+                break
+            except: print("Ker je bila spremenjena MESEČNA bruto premija, mora tudi nova vrednost LETNE bruto premije biti številka.")
+    if premium_changes_bruto: changes["bruto"] = tuple(premium_changes_bruto)
     return changes
 
 def generateOutput(policy_code, data, date):
@@ -178,12 +199,19 @@ def generateOutput(policy_code, data, date):
                   .format(policy_code)
     SQL_e2_nezgoda_premija_insert = ""
     for (id, premiums) in data.items():
-        SQL_e2_nezgoda_premija_insert += "INSERT INTO e2_nezgoda_premija\n  (SIFRA_PONUDBE,\n  ID_KRITJE,\n  MESECNA_PREMIJA,\n  LETNA_PREMIJA,\n  DATUM_VELJAVNOSTI)\nVALUES\n  ('{}',\n   {},\n   {},\n   {},\n   '{}');\n\n"\
-            .format(policy_code,
-                    id,
-                    premiums[0],
-                    premiums[1],
-                    date)
+        if id != "bruto":
+            SQL_e2_nezgoda_premija_insert += "INSERT INTO e2_nezgoda_premija\n  (SIFRA_PONUDBE,\n  ID_KRITJE,\n  MESECNA_PREMIJA,\n  LETNA_PREMIJA,\n  DATUM_VELJAVNOSTI)\nVALUES\n  ('{}',\n   {},\n   {},\n   {},\n   '{}');\n\n"\
+                .format(policy_code,
+                        id,
+                        premiums[0],
+                        premiums[1],
+                        date)
+    SQL_e2_nezgoda_premija_insert += "INSERT INTO e2_nezgoda_premija_bruto\n  (SIFRA_PONUDBE,\n  DATUM_SPREMEMBE,\n  MESECNA_PREMIJA,\n  LETNA_PREMIJA,\n  STATUS)\nVALUES\n  ('{}',\n   '{}',\n   {},\n   {},\n   '{}');\n\n" \
+        .format(policy_code,
+                date,
+                data["bruto"][0],
+                data["bruto"][1],
+                'A')
     return description1 + "<pre>\n<code class=\"sql\">\n" + SQL_e2_nezgoda_premija_insert[:-1] + "</code>\n</pre>" + descrption2
 
 def main():
@@ -205,7 +233,6 @@ def main():
         if verifyDate(effective_date): break
         else: print("Vnesi datum v veljavnem D.M.YYYY formatu.")
     fh = open("sprememba_premij.txt", "w")
-    print(getBenefitIDs(wb))
     fh.write(generateOutput(getPolicyNo(wb), OrderedDict(getChanges(getBenefitIDs(wb))), effective_date))
     fh.close()
     print("Ustvarjeni podatki shranjeni v datoteko sprememba_premij.txt.")
