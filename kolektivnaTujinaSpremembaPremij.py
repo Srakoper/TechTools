@@ -99,7 +99,7 @@ def generateOutput(policies_data, current_dates):
             output_pol_benf.append("UPDATE pol_benf SET PREMIUM = {} WHERE POL_REF_NO = {};" \
                                    .format(policy.getNew_gross_premium(),
                                            policy.getPol_ref_no()))
-            output_pol_endorsements.append("INSERT INTO pol_endorsements (SITENO, ENDORSE_TYPE, POL_REF_NO, BENFNO, CHANGE_DESC, BENF_ORD, OLD_VALUE, NEW_VALUE, EFFECTIVE_DATE, TRANSACTION_DATE) VALUES (7, 7, {}, 80, 'Change of Premium', 1, {}, {}, '{}', sysdate);" \
+            output_pol_endorsements.append("INSERT INTO pol_endorsements (SITENO, ENDORSE_TYPE, POL_REF_NO, BENFNO, CHANGE_DESC, BENF_ORD, OLD_VALUE, NEW_VALUE, EFFECTIVE_DATE, TRANSACTION_DATE, STATUS) VALUES (7, 7, {}, 80, 'Change of Premium', 1, {}, {}, '{}', sysdate, 'A');" \
                                            .format(policy.getPol_ref_no(),
                                                    policy.getCancelled_premium(),
                                                    policy.getNew_gross_premium(),
