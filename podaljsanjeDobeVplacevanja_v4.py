@@ -319,8 +319,6 @@ def generateOutput(data, y, m, sign_date):
                         176)
             SQL_ua_holdings.append(SQL_ua_holdings_174)
             SQL_ua_holdings.append(SQL_ua_holdings_176)
-
-
         return ("{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}" \
             .format(SQL_policy,
                     SQL_pol_benf,
@@ -348,7 +346,7 @@ def generateOutput(data, y, m, sign_date):
 def main():
     path = getcwd().replace("\\", "\\\\") + "\\\\"
     output = "<pre>\n<code class=\"sql\">\n"
-    appendix = ""
+    appendix = "\n\n"
     while True:
         finished = False
         while True:
@@ -385,9 +383,8 @@ def main():
             else: break
         if finished: break
     fh = open("podaljsanje_dobe.txt", "w")
-    fh.write(output)
+    fh.write(output.rstrip() + "\n</code>\n</pre>")
     fh.write(appendix.rstrip())
-    fh.write("\n</code>\n</pre>")
     fh.close()
     print("Ustvarjeni podatki shranjeni v datoteko podaljsanje_dobe.txt.")
 if __name__ == "__main__":
