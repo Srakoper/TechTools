@@ -20,7 +20,7 @@ def getWorkbook(filename, dir):
     """
     return load_workbook(dir + filename, data_only = True)
 
-def getData(workbook):
+def getData(workbook, cpid1, cpid2):
     """
     Fetches relevant data from the Workbook object.
     :param workbook: Workbook object
@@ -30,13 +30,37 @@ def getData(workbook):
     sheet2 = workbook["Select claims_payment"]
     sheet3 = workbook["Select sa_postings"]
     sheet4 = workbook["Select claim_dets"]
-    policy_policy_no                    = int(sheet1["C2"].value)
-    claims_payment_claims_payment_id_1  = int(sheet2["C2"].value)
-    claims_payment_claims_payment_id_2  = int(sheet2["C3"].value)
-    claims_payment_amount_1             = float(sheet2["J2"].value)
-    claims_payment_amount_2             = float(sheet2["J3"].value)
-    claims_payment_curr_amount_1        = float(sheet2["L2"].value)
-    claims_payment_curr_amount_2        = float(sheet2["L3"].value)
+    row1 = 2
+    row2 = 3
+    if cpid1 and cpid2:
+        found_cpid1 = False
+        found_cpid2 = False
+        for i in range(1, len(sheet2["C"])):
+            if sheet2["C"][i].value:
+                if int(sheet2["C"][i].value) == int(cpid1):
+                    row1 = i + 1
+                    found_cpid1 = True
+                if int(sheet2["C"][i].value) == int(cpid2):
+                    row2 = i + 1
+                    found_cpid2 = True
+            else: break
+        if not found_cpid1:
+            print("ID izplačila 1 ne obstaja za to polico.")
+            exit()
+        if not found_cpid2:
+            print("ID izplačila 2 ne obstaja za to polico.")
+            exit()
+    policy_policy_no = int(sheet1["C2"].value)
+    if cpid1 and cpid2:
+        claims_payment_claims_payment_id_1 = cpid1
+        claims_payment_claims_payment_id_2 = cpid2
+    else:
+        claims_payment_claims_payment_id_1  = int(sheet2["C2"].value)
+        claims_payment_claims_payment_id_2  = int(sheet2["C3"].value)
+    claims_payment_amount_1 = float(sheet2["J{}".format(row1)].value)
+    claims_payment_amount_2 = float(sheet2["J{}".format(row2)].value)
+    claims_payment_curr_amount_1 = float(sheet2["L{}".format(row1)].value)
+    claims_payment_curr_amount_2 = float(sheet2["L{}".format(row2)].value)
     sa_postings_personal_income_tax_ids = list()
     for i in range(len(sheet3["B"])):
         if sheet3["B"][i].value == "Maturity Claim Payment (To Client)" or sheet3["B"][i].value == "Surrender Claim Payment (To Client)":
@@ -96,12 +120,15 @@ def generateOutput(data):
     SQL_sa_posting_delete     = "DELETE\n  FROM sa_postings\n WHERE SA_POSTINGNO IN {};"\
         .format(data["sa_postings_personal_income_tax_ids"])
     if data["claims_dets_claim_amt"] and data["sa_postings_sa_transno"]:
-        description3          = "V tabeli claim_dets, kjer je SA_POSTINGNO = {}, je treba popraviti vrednost v stolpcu CLAIM_AMT:\n\nstara vrednost: {}\nnova vrednost: {}"\
+        description3          = "V tabeli claim_dets, kjer je SA_POSTINGNO = {}, je treba popraviti vrednost v stolpcih CLAIM_AMT in CLAIM_NET_AMT:\n\nstara vrednost: {}\nnova vrednost: {}\n\nV isti tabeli je treba popraviti vrednost v stolpcu CLAIM_TAX:\n\nstara vrednost: {}\nnova vrednost: {}"\
             .format(data["sa_postings_sa_transno"],
                     "{:.2f}".format(data["claims_payment_amount_2"]).replace(".", ","),
-                    "{:.2f}".format(claims_payment_amount_new).replace(".", ","))
-        SQL_claim_dets_update = "UPDATE claim_dets\n   SET CLAIM_AMT = {}\n WHERE SA_POSTINGNO = {};"\
+                    "{:.2f}".format(claims_payment_amount_new).replace(".", ","),
+                    "{:.2f}".format(data["claims_payment_curr_amount_1"]).replace(".", ","),
+                    "0,00")
+        SQL_claim_dets_update = "UPDATE claim_dets\n   SET CLAIM_AMT = {},\n       CLAIM_NET_AMT = {},\n       CLAIM_TAX = 0.00\n WHERE SA_POSTINGNO = {};"\
             .format("{:.2f}".format(claims_payment_amount_new),
+                    "{:.2f}".format(claims_payment_amount_new),
                     data["sa_postings_sa_transno"])
     else:
         description3 = False
@@ -118,8 +145,22 @@ def main():
             wb = getWorkbook(filename_input, path)
             break
         except FileNotFoundError: print("Datoteka ne obstaja. Poskusi znova.")
+    while True:
+        claims_payment_id_1 = input("Opcionalno: ID izplačila 1, ENTER za prazno: ")
+        if claims_payment_id_1:
+            try:
+                int(claims_payment_id_1)
+                break
+            except ValueError: print("ID izplačila 1 mora biti številka ali brez vrednosti.")
+    while True:
+        claims_payment_id_2 = input("Opcionalno: ID izplačila 2, ENTER za prazno: ")
+        if claims_payment_id_2:
+            try:
+                int(claims_payment_id_2)
+                break
+            except ValueError: print("ID izplačila 2 mora biti številka ali brez vrednosti.")
     fh = open("popravek_izplacil.txt", "w")
-    fh.write(generateOutput(getData(wb)))
+    fh.write(generateOutput(getData(wb, claims_payment_id_1, claims_payment_id_2)))
     fh.close()
     print("Ustvarjeni podatki shranjeni v datoteko popravek_izplacil.txt.")
 
