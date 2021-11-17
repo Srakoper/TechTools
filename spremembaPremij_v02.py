@@ -225,13 +225,13 @@ def generateOutput(policy_code, data, date):
     SQL_e2_nezgoda_premija_insert = ""
     for (id, premiums) in data.items():
         if id != "bruto":
-            SQL_e2_nezgoda_premija_insert += "INSERT\n  INTO e2_nezgoda_premija\n      (SIFRA_PONUDBE,\n       ID_KRITJE,\n       MESECNA_PREMIJA,\n       LETNA_PREMIJA,\n       DATUM_VELJAVNOSTI)\nVALUES ('{}',\n       {},\n       {},\n       {},\n       '{}');\n\n"\
+            SQL_e2_nezgoda_premija_insert += "INSERT\n  INTO e2_nezgoda_premija\n      (SIFRA_PONUDBE,\n       ID_KRITJE,\n       MESECNA_PREMIJA,\n       LETNA_PREMIJA,\n       DATUM_VELJAVNOSTI)\nVALUES ('{}',\n        {},\n        {},\n        {},\n        '{}');\n\n"\
                 .format(policy_code,
                         id,
                         premiums[0],
                         premiums[1],
                         date)
-    SQL_e2_nezgoda_premija_insert += "INSERT\n  INTO e2_nezgoda_premija_bruto\n      (SIFRA_PONUDBE,\n       DATUM_SPREMEMBE,\n       MESECNA_PREMIJA,\n       LETNA_PREMIJA,\n       STATUS)\nVALUES ('{}',\n       '{}',\n       {},\n       {},\n       '{}');\n\n" \
+    SQL_e2_nezgoda_premija_insert += "INSERT\n  INTO e2_nezgoda_premija_bruto\n      (SIFRA_PONUDBE,\n       DATUM_SPREMEMBE,\n       MESECNA_PREMIJA,\n       LETNA_PREMIJA,\n       STATUS)\nVALUES ('{}',\n        '{}',\n        {},\n        {},\n        '{}');\n\n" \
         .format(policy_code,
                 date,
                 data["bruto"][0],
@@ -245,13 +245,15 @@ def main():
     path:str = getcwd().replace("\\", "\\\\") + "\\\\"
     queries:tuple = (("SELECT * FROM e2_nezgoda_premija WHERE sifra_ponudbe = :policy_no", ("policy_no",)), ("SELECT * FROM e2_nezgoda_premija_bruto WHERE sifra_ponudbe = :policy_no", ("policy_no",)))
     today:str = datetime.today().strftime('%Y-%m-%d')
+    print("################\nSPREMEMBA PREMIJ\n################\nrazličica: 2.0\nzadnja sprememba: 17. 11. 2021\navtor: Damjan Mihelič\nopis: Skripta za ustvarjanje SQL ukazov za spremembo premij nevarnostnega razreda (tabeli e2_nezgoda_premija, e2_nezgoda_premija_bruto). Zapiše SQL ukaze v datoteko .txt in shrani backup podatke v datoteko .xlsx.\ndelovanje: Vnesi št. zahtevka, št. police, uporabniško ime geslo za dostop do baze PROD19c, datum spremembe in zneske novih premij (X + ENTER za izhod).\n")
     claim:str = input("Zahtevek: ")
+    if claim in ("x", "X"): quit()
     if not claim.startswith("#"): claim = "#" + claim
-    policy_no:str = input("Številka police (X + ENTER za izhod): ")
+    policy_no:str = input("Številka police: ")
     if policy_no in ("x", "X"): quit()
-    db_username:str = input("Uporabniško ime za dostop do baze PROD19c (X + ENTER za izhod): ")
+    db_username:str = input("Uporabniško ime za dostop do baze PROD19c: ")
     if db_username in ("x", "X"): quit()
-    db_password:str = input("Geslo za dostop do baze PROD19c (X + ENTER za izhod): ")
+    db_password:str = input("Geslo za dostop do baze PROD19c: ")
     if db_password in ("x", "X"): quit()
     while True:
         effective_date:str = input("Datum podpisa/veljavnosti v formatu D.M.YYYY: ")
