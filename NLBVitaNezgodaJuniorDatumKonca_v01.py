@@ -16,7 +16,8 @@ def main():
     incorrect_policies:tuple = DBu.getQueryResults(db, username, password, queries[0])
     if not incorrect_policies[1]:
         print("\nNo viable NLB Vita Nezgoda Junior policies with incorrect end dates found.")
-        exit()
+        input("\nPress any key + ENTER to finish.")
+        quit()
     policy_nos:tuple = tuple(f"'{p}'" for p in getColumnData(incorrect_policies[1], 4))
     pol_ref_nos:tuple = getColumnData(incorrect_policies[1], 1)
     incorrect_proposals:tuple = DBu.getQueryResults(db, username, password, queries[1], None, {"/* policy_nos */": (policy_nos,)})
